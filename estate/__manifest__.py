@@ -13,7 +13,9 @@ Developed following the Odoo Server Framework 101 tutorial.
     'depends': [
         'base',
     ],
-    'data': [],
+    'data': [
+        'security/ir.access.csv',
+    ],
     'installable': True,
     'application': True,
     'license': 'LGPL-3',
