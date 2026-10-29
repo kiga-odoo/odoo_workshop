@@ -50,6 +50,19 @@ class EstatePropertyOffer(models.Model):
             else:
                 record.validity = 7
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            property_id = self.env['estate.property'].browse(vals['property_id'])
+            if property_id.offer_ids:
+                max_price = max(property_id.offer_ids.mapped('price'))
+                if vals.get('price', 0) < max_price:
+                    raise UserError(
+                        f"The offer amount ({vals.get('price')}) cannot be lower than an existing offer ({max_price})."
+                    )
+            property_id.state = 'offer_received'
+        return super().create(vals_list)
+
     def action_accept(self):
         for record in self:
             if any(offer.status == 'accepted' for offer in record.property_id.offer_ids):
@@ -64,16 +77,3 @@ class EstatePropertyOffer(models.Model):
         for record in self:
             record.status = 'refused'
         return True
-
-    @api.model_create_multi
-    def create(self, vals_list):
-        for vals in vals_list:
-            property_id = self.env['estate.property'].browse(vals['property_id'])
-            if property_id.offer_ids:
-                max_price = max(property_id.offer_ids.mapped('price'))
-                if vals.get('price', 0) < max_price:
-                    raise UserError(
-                        f"The offer amount ({vals.get('price')}) cannot be lower than an existing offer ({max_price})."
-                    )
-            property_id.state = 'offer_received'
-        return super().create(vals_list)
